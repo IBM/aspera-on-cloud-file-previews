@@ -1,0 +1,2 @@
+high_resource_lambda_name: "File_Preview_Video_Processing"
+low_resource_lambda_name: "File_Preview_Image_Processing"

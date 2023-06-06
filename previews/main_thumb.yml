@@ -1,0 +1,6 @@
+thumb_image_size: 800
+thumb_pdf_size: 800
+preview_duration: 15
+preview_audio: false
+ibm_max_memory: 2048
+ibm_max_disk: 10240

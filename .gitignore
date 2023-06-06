@@ -1,0 +1,3 @@
+terraform-aws/previews/.terraform*
+terraform-aws/previews/terraform.*
+previews/*__pycache__
