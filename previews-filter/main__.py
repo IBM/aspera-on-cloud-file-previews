@@ -63,20 +63,19 @@ def main(event, context):
       raise Exception("Preview files are ignored")
     script_path = str(pathlib.Path(__file__).parent.resolve())
     formats = read_yaml(f"{script_path}/file_formats.yml")
-    config = read_yaml(f"{script_path}/config.yml")
     is_video = key.lower().endswith(tuple(formats["video"]))
     is_image = key.lower().endswith(tuple(formats["image"]))
     if not is_video and not is_image:
       raise Exception("File extension not supported")
 
-    response1 = client.get_function_configuration(FunctionName=config['high_resource_lambda_name'])
-    response2 = client.get_function_configuration(FunctionName=config['low_resource_lambda_name'])
+    response1 = client.get_function_configuration(FunctionName=os.environ['high_resource_lambda_name'])
+    response2 = client.get_function_configuration(FunctionName=os.environ['low_resource_lambda_name'])
     if int(response1['MemorySize']) > int(response2['MemorySize']):
-      video_lambda = config['high_resource_lambda_name']
-      image_lambda = config['low_resource_lambda_name']
+      video_lambda = os.environ['high_resource_lambda_name']
+      image_lambda = os.environ['low_resource_lambda_name']
     else:
-      video_lambda = config['low_resource_lambda_name']
-      image_lambda = config['high_resource_lambda_name']
+      video_lambda = os.environ['low_resource_lambda_name']
+      image_lambda = os.environ['high_resource_lambda_name']
 
     if is_video:
       invoke_lambda(video_lambda, event)

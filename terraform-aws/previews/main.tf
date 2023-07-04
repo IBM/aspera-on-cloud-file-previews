@@ -129,6 +129,13 @@ resource "aws_lambda_function" "terraform_lambda_filter" {
   ephemeral_storage {
     size = var.ephemeral_size_min
   }
+
+  environment {
+    variables = {
+      high_resource_lambda_name = aws_lambda_function.terraform_lambda_video.function_name
+      low_resource_lambda_name  = aws_lambda_function.terraform_lambda_image.function_name
+    }
+  }
 }
 
 resource "aws_lambda_permission" "allow_bucket_filter" {
@@ -171,6 +178,13 @@ resource "aws_lambda_function" "terraform_lambda_checker" {
 
   ephemeral_storage {
     size = var.ephemeral_size_min
+  }
+
+  environment {
+    variables = {
+      high_resource_lambda_name = aws_lambda_function.terraform_lambda_video.function_name
+      low_resource_lambda_name  = aws_lambda_function.terraform_lambda_image.function_name
+    }
   }
 }
 
