@@ -45,17 +45,16 @@ def main(event, context):
   skip_words = ['previews/', '.asp-preview'] # Just in case there's a file with the name of preview in it
   script_path = str(pathlib.Path(__file__).parent.resolve())
   formats = read_yaml(f"{script_path}/file_formats.yml")
-  config = read_yaml(f"{script_path}/config.yml")
   in_progress = False
 
-  response1 = client.get_function_configuration(FunctionName=config['high_resource_lambda_name'])
-  response2 = client.get_function_configuration(FunctionName=config['low_resource_lambda_name'])
+  response1 = client.get_function_configuration(FunctionName=os.environ['high_resource_lambda_name'])
+  response2 = client.get_function_configuration(FunctionName=os.environ['low_resource_lambda_name'])
   if int(response1['MemorySize']) > int(response2['MemorySize']):
-    video_lambda = config['high_resource_lambda_name']
-    image_lambda = config['low_resource_lambda_name']
+    video_lambda = os.environ['high_resource_lambda_name']
+    image_lambda = os.environ['low_resource_lambda_name']
   else:
-    video_lambda = config['low_resource_lambda_name']
-    image_lambda = config['high_resource_lambda_name']
+    video_lambda = os.environ['low_resource_lambda_name']
+    image_lambda = os.environ['high_resource_lambda_name']
   
 
   for my_bucket_object in my_bucket.objects.filter(Prefix=path, Marker=last_item):
