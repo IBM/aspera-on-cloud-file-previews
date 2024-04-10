@@ -51,6 +51,12 @@ resource "aws_lambda_function" "terraform_lambda_video" {
   ephemeral_storage {
     size = var.ephemeral_size_previews # Min 512 MB and the Max 10240 MB
   }
+
+  environment {
+    variables = {
+      preview_duration = var.preview_duration
+    }
+  }
 }
 
 resource "aws_lambda_function" "terraform_lambda_image" {
@@ -64,6 +70,12 @@ resource "aws_lambda_function" "terraform_lambda_image" {
 
   ephemeral_storage {
     size = var.ephemeral_size_previews
+  }
+
+  environment {
+    variables = {
+      preview_duration = var.preview_duration
+    }
   }
 }
 

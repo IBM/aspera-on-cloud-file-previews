@@ -22,13 +22,12 @@ To enable the use of the IBM Aspera File Preview, you must build a container ima
 ## Configuration
 
 The following settings can be adjusted before the installation depending on your use cases:
-- Change the value of `preview_duration` inside of `./previews/main_thumb.yml` to increase the duration of a preview for video files.
+- Change the value of `preview_duration` inside of `./terraform-aws/previews/variables.tf` to increase the duration of a preview for video files.
   * Default value is set to *15* seconds
-  * You can extend previews up to *60* seconds (max).
+  * Value can be changed anytime within AWS Lambda page in the Configuration -> environment variables section.
 - To add the audio of preview videos set the value of `preview_audio` in the `./previews/main_thumb.yml` directory to `true`.
-- There will be 2 instances of File Preview in AWS Lambda, one with high resources that will be used for the `video` preview processing and another with low resources for the `image` thumbnail processing. Depending on the file extension, it will invoke either of them to reduce `costs` of the running AWS Lambda Instances.  In the `./previews-checker/config.yml` and `./previews-filter/config.yml`, you **must** define the name of the two Lambda functions. They must match with the values defined in `./terraform-aws/previews/variables.tf`, and the correlations are
-  * `high_resource_lambda_name` -> `function_name_previews_video`
-  * `low_resource_lambda_name` -> `function_name_previews_image`
+- There will be 2 instances of File Preview in AWS Lambda, one with high resources that will be used for the `video` preview processing and another with low resources for the `image` thumbnail processing. Depending on the file extension, it will invoke either of them to reduce `costs` of the running AWS Lambda Instances.
+- The environment variables for 'high_resource_lambda_name' and 'low_resource_lambda_name' in the AWS page are not required to be changed, unless the names for the lambda functions are manually changed outside of Terraform.
 
 ## Installation
 

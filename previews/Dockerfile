@@ -98,9 +98,9 @@ COPY --from=build-image /usr/local/etc/ffmpeg ${FUNCTION_DIR}
 
 # Get cisco binary to avoid MPEG LA license fees
 RUN wget http://ciscobinary.openh264.org/libopenh264-2.1.0-linux64.5.so.bz2
-RUN bzip2 -d libopenh264-*
-RUN mv libopenh264* /function/build/lib/libopenh264.so.5
-COPY --from=build-image /usr/local/lib/libSvtAv1Enc* /function/build/lib/libSvtAv1Enc.so.1
+RUN bzip2 -d libopenh264-* -c > libopenh264.so
+RUN mv libopenh264.so /function/build/lib/libopenh264.so.5
+COPY --from=build-image /usr/local/lib/libSvtAv1Enc.so /function/build/lib/libSvtAv1Enc.so.1
 
 FROM base AS branch-openh264
 
@@ -129,11 +129,10 @@ ADD https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest
 COPY entry.sh /
 RUN chmod 755 /usr/bin/aws-lambda-rie /entry.sh
 
-RUN useradd -M -d ${FUNCTION_DIR} -u 1000 app \
-    && chown -R app:app ${FUNCTION_DIR}
+RUN useradd -M -d /function -u 1000 app \
+    && chown -R app:app /function
 
 USER app
 
 ENTRYPOINT [ "/entry.sh" ]
 
-        
