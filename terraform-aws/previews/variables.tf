@@ -18,6 +18,10 @@ variable "timeout" {
   default = 600
 }
 
+variable "preview_duration" {
+  default = 15
+}
+
 variable "timeout_checker" {
   default = 600
 }

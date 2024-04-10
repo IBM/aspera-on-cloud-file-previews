@@ -26,6 +26,7 @@ bucket = ""
 provider = ""
 uuid_str = ""
 cpu_cores = 0
+default_preview_duration = 15
 
 def get_video_duration(file, is_downloaded):
   try:
@@ -330,11 +331,8 @@ def main(event, context=""):
 
   path_to_file = os.path.splitext(key)[0]
   if is_video:
-    preview_duration = int(config["preview_duration"])
-    if preview_duration > 60:
-      print("Preview duration can't be longer than a minute, setting value to 60")
-      preview_duration = 60
-    elif preview_duration < 1:
+    preview_duration = int(os.environ.get('preview_duration')) if 'preview_duration' in os.environ and os.environ.get('preview_duration').isdigit() else default_preview_duration
+    if preview_duration < 1:
       print("Previews should be at least 1 second long")
       preview_duration = 1
     preview_file_name = "/tmp/preview.mp4"
