@@ -18,6 +18,7 @@ from ibm_botocore.client import ClientError, Config
 if os.environ.get("LAMBDA_TASK_ROOT"):
     import boto3  # For some reason can't find boto3 when using IBM Functions even though it works just fine in AWS
     from botocore.exceptions import ClientError
+    from botocore.client import Config
 
 key = ""
 is_downloaded = False
@@ -88,11 +89,11 @@ def generate_clipv2(url, output, clip_duration, preview_audio):
   start = time.time()
   encoder = "libvpx-vp9"
   audio_arg = "-an"
-  if os.system("test -e /usr/local/lib/libx264*") == 0:
+  if os.system("find /usr/local/lib/ -name 'libx264*' -print -quit | grep -q .") == 0:
     encoder = "libx264"
-  elif os.system("test -e /usr/local/lib/libopenh264*") == 0:
+  elif os.system("find /usr/local/lib/ -name 'libopenh264*' -print -quit | grep -q .") == 0:
     encoder = "libopenh264"
-  elif os.system("test -e /usr/local/lib/libSvtAv1Enc*") == 0:
+  elif os.system("find /usr/local/lib/ -name 'libSvtAv1Enc*' -print -quit | grep -q .") == 0:
     encoder = "libsvtav1"
   print(f"Generating clip with output: {output} using encoder: {encoder}")
 
@@ -102,6 +103,7 @@ def generate_clipv2(url, output, clip_duration, preview_audio):
   cmd = "/function/bin/ffmpeg -y -i \"" + url + f"\" -t {clip_duration} \
   -c:v {encoder} -vf fps=24,scale=1280x720 -b:v 1400k {audio_arg} -cpu-used -{cpu_cores} -deadline realtime {output}"
   command = shlex.split(cmd)
+  print("RUNNING FFMPEG VIDEO COMMAND: ", ' '.join(command[:3] + command[4:])) # Printing command wihout presigned url
   sp.run(command)
   video_thumb(url, "/tmp/thumb.jpg")
   end = time.time()
@@ -110,12 +112,14 @@ def generate_clipv2(url, output, clip_duration, preview_audio):
 def video_thumb(url, output):
   cmd = "/function/bin/ffmpeg -y -i \"" + url + f"\" -vf 'scale=320:320:force_original_aspect_ratio=decrease' -vframes 1 {output}"
   command = shlex.split(cmd)
+  print("RUNNING FFMPEG IMAGE COMMAND: ", ' '.join(command[:3] + command[4:])) # Printing command wihout presigned url
   sp.run(command)
 
 def pdf_thumbv2(url, output):
   start = time.time()
   cmd = f"convert -size x800 -background white -flatten {url}[0] {output}"
   command = shlex.split(cmd)
+  print("RUNNING IMAGEMAGICK COMMAND: ", ' '.join(command[:6] + command[7:])) # Printing command wihout presigned url
   sp.run(command)
   end = time.time()
   print(end - start, " FINISHED GENERATING A PDF THUMBNAIL")
@@ -125,6 +129,7 @@ def image_thumbv2(url, output):
   cmd = f"convert {url}[0] -auto-orient -thumbnail 800x800\\>"\
       f" -quality 95 +dither -posterize 40 '{output}'"
   command = shlex.split(cmd)
+  print("RUNNING IMAGEMAGICK COMMAND: ", ' '.join(command[:1] + command[2:])) # Printing command wihout presigned url
   sp.run(command)
   # cmd2 = ["optipng", f"{output}"]
   # sp.run(cmd2)
@@ -286,7 +291,7 @@ def main(event, context=""):
   uuid_str = str(uuid.uuid4())
 
   if os.environ.get("LAMBDA_TASK_ROOT"):
-    s3 = boto3.client("s3")
+    s3 = boto3.client("s3", config=Config(signature_version='s3v4'))
     provider = "AWS"
     bucket = event["Records"][0]["s3"]["bucket"]["name"]
     key = urllib.parse.unquote_plus(event["Records"][0]["s3"]["object"]["key"], encoding="utf-8")
@@ -309,7 +314,11 @@ def main(event, context=""):
     max_mem_size = config["ibm_max_memory"]
     content_length = event["notification"]["object_length"]
   if "previews" in key:
-    raise Exception("preview files are ignored")
+    print("Stopping lambda: Preview files are ignored")
+    return {
+      "statusCode": 200,
+      "body": json.dumps("Stopping lambda: Preview files are ignored")
+    }
 
   file_name = os.path.basename(key)
   formats = read_yaml(f"{script_path}/file_formats.yml")
@@ -332,6 +341,7 @@ def main(event, context=""):
   path_to_file = os.path.splitext(key)[0]
   if is_video:
     preview_duration = int(os.environ.get('preview_duration')) if 'preview_duration' in os.environ and os.environ.get('preview_duration').isdigit() else default_preview_duration
+    preview_audio = os.getenv('preview_audio', 'false').lower() in ['true']
     if preview_duration < 1:
       print("Previews should be at least 1 second long")
       preview_duration = 1
@@ -365,7 +375,7 @@ def main(event, context=""):
       end_clip = time.time()
       print(end_clip- start_clip, "FINISHED CREATING A CLIP")
     elif provider == "AWS":
-      generate_clipv2(url, preview_file_name, preview_duration, config["preview_audio"])
+      generate_clipv2(url, preview_file_name, preview_duration, preview_audio)
 
     check_output(f"{preview_file_name}", "ffmpeg")
     check_output(f"/tmp/thumb.jpg", "ffmpeg")
@@ -411,8 +421,8 @@ def main(event, context=""):
     print(end - start, "DELETED FILE")
 
   return {
-      "statusCode": 200,
-      "body": json.dumps("Hello from Lambda!"),
-      "provider": f"{provider}",
-      "method": "local disk" if is_downloaded else "pipe"
+    "statusCode": 200,
+    "body": json.dumps("Hello from Lambda!"),
+    "provider": f"{provider}",
+    "method": "local disk" if is_downloaded else "pipe"
   }

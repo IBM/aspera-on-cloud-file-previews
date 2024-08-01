@@ -60,7 +60,11 @@ def main(event, context):
     remove_tags(s3, bucket, source_file_name)
   else:
     if "previews" in key:
-      raise Exception("Preview files are ignored")
+      print("Stopping lambda: Preview files are ignored")
+      return {
+        "statusCode": 200,
+        "body": json.dumps("Stopping lambda: Preview files are ignored")
+      }
     script_path = str(pathlib.Path(__file__).parent.resolve())
     formats = read_yaml(f"{script_path}/file_formats.yml")
     is_video = key.lower().endswith(tuple(formats["video"]))
@@ -84,6 +88,6 @@ def main(event, context):
       invoke_lambda(image_lambda, event)
       print(f"Invoked previews image with file: {key}")
   return {
-    'statusCode': 200,
-    'body': json.dumps('Hello from Lambda!')
+    "statusCode": 200,
+    "body": json.dumps('Hello from Lambda!')
   }
