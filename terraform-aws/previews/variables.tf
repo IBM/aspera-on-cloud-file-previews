@@ -22,6 +22,10 @@ variable "preview_duration" {
   default = 15
 }
 
+variable "preview_audio" {
+  default = false
+}
+
 variable "timeout_checker" {
   default = 600
 }

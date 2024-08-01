@@ -55,6 +55,7 @@ resource "aws_lambda_function" "terraform_lambda_video" {
   environment {
     variables = {
       preview_duration = var.preview_duration
+      preview_audio    = var.preview_audio
     }
   }
 }
@@ -66,7 +67,7 @@ resource "aws_lambda_function" "terraform_lambda_image" {
   memory_size   = var.memory_size_previews_image
   timeout       = var.timeout
   image_uri     = var.image_uri_previews
-  depends_on   = [module.s3]
+  depends_on    = [module.s3]
 
   ephemeral_storage {
     size = var.ephemeral_size_previews
