@@ -19,11 +19,23 @@ variable "timeout" {
 }
 
 variable "preview_duration" {
-  default = 15
+  default = 10
 }
 
 variable "preview_audio" {
   default = false
+}
+
+variable "preview_resolution" {
+  default = "720p"
+}
+
+variable "preview_fps" {
+  default = 24
+}
+
+variable "preview_bitrate" {
+  default = 1400
 }
 
 variable "timeout_checker" {

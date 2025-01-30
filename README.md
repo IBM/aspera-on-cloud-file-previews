@@ -21,13 +21,27 @@ To enable the use of the IBM Aspera File Preview, you must build a container ima
 
 ## Configuration
 
-The following settings can be adjusted before the installation depending on your use cases:
-- Change the value of `preview_duration` inside of `./terraform-aws/previews/variables.tf` to increase the duration of a preview for video files.
-  * Default value is set to *15* seconds.
-  * Value can be changed anytime within AWS Lambda page in the Configuration -> environment variables section.
-- To add the audio of preview videos set the value of `preview_audio` in the `./terraform-aws/previews/variables.tf` directory to `true`.
-  * Default value is set to *false*.
-  * Value can also be changed anytime in AWS Lambda page.
+You can adjust the following settings before the installation depending on your use cases:
+- `preview_duration`
+  * The duration of the preview for video files. The value is set in seconds.
+  * The default value is set to *10* seconds.
+- `preview_audio`
+  * Set `preview_audio` to `true` to include audio in your video previews.
+  * The default value is set to *false*.
+- `preview_resolution`
+  * The output resolution of the preview for video files.
+  * The available resolutions are: 1080p, 720p, 480p, 360p, and 240p.
+  * The default value is set to *720p*
+- `preview_fps`
+  * The output *frames per second* of the preview for video files.
+  * The value can be lower or equal than 60 but higher or equal than 5. Any values outside of this range will default to 24.
+  * The default value is set to *24*.
+- `preview_bitrate`
+  * The output bit rate of the preview for video files that FFmpeg will ***attempt*** to match. 
+  * The value is set in kilobits per second (kbit/s).
+  * The default value is set to *1400*.
+- You can modify these values by editing the `./terraform-aws/previews/variables.tf` file, or in the AWS Lambda page in the Configuration -> environment variables section.
+Keep in mind that these settings ***will*** affect the Lambda function duration.
 - There will be 2 instances of File Preview in AWS Lambda, one with high resources that will be used for the `video` preview processing and another with low resources for the `image` thumbnail processing. Depending on the file extension, it will invoke either of them to reduce `costs` of the running AWS Lambda Instances.
 - The environment variables for 'high_resource_lambda_name' and 'low_resource_lambda_name' in the AWS page are not required to be changed, unless the names for the lambda functions are manually changed outside of Terraform.
 
@@ -67,7 +81,7 @@ These four options are available since the user **has to** make a choice between
 
 The `encoder` can be changed to one of the values in this list: `['vp9', 'av1', 'x264', 'openh264']`. An example command to build the docker image and install vp9 in it would be:
 ```
-$ cd previews && docker build --build-arg encoder=vp9 -t {account_id}.dkr.ecr.{region}.amazonaws.com/{repo_name}:previews .
+$ cd previews && docker build --build-arg encoder=vp9 --provenance=false -t {account_id}.dkr.ecr.{region}.amazonaws.com/{repo_name}:previews .
 ```
 **Note**: `{repo_name}` has to match the AWS ECR private repository you created previously.
 

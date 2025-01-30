@@ -27,7 +27,10 @@ bucket = ""
 provider = ""
 uuid_str = ""
 cpu_cores = 0
-default_preview_duration = 15
+default_preview_duration = 10
+default_preview_fps = 24
+default_preview_resolution = {"1080p": "1920x1080", "720p": "1280x720", "480p": "640x480", "360p": "480x360", "240p": "320x240"}
+default_preview_bitrate = 1400
 
 def get_video_duration(file, is_downloaded):
   try:
@@ -85,7 +88,7 @@ def generate_clip(file, output, is_downloaded, duration, clip_duration, max_mem_
   cmd = ["/function/bin/ffmpeg", "-y",  "-ss", f"{time_offset}", "-t", f"{clip_duration}", "-i", "-", "-vf", "fps=24,scale=1280x720", "-an", "-cpu-used", f"-{cpu_cores}", "-deadline", "realtime", output]
   sp.run(cmd, input=get_item(max_mem_size))
 
-def generate_clipv2(url, output, clip_duration, preview_audio):
+def generate_clipv2(url, output, clip_duration, preview_audio, preview_res, preview_fps, preview_bitrate):
   start = time.time()
   encoder = "libvpx-vp9"
   audio_arg = "-an"
@@ -101,7 +104,7 @@ def generate_clipv2(url, output, clip_duration, preview_audio):
     audio_arg = "-b:a 96k"
 
   cmd = "/function/bin/ffmpeg -y -i \"" + url + f"\" -t {clip_duration} \
-  -c:v {encoder} -vf fps=24,scale=1280x720 -b:v 1400k {audio_arg} -cpu-used -{cpu_cores} -deadline realtime {output}"
+  -c:v {encoder} -vf fps={preview_fps},scale={preview_res} -b:v {preview_bitrate}k {audio_arg} -cpu-used -{cpu_cores} -deadline realtime {output}"
   command = shlex.split(cmd)
   print("RUNNING FFMPEG VIDEO COMMAND: ", ' '.join(command[:3] + command[4:])) # Printing command wihout presigned url
   sp.run(command)
@@ -341,6 +344,11 @@ def main(event, context=""):
   path_to_file = os.path.splitext(key)[0]
   if is_video:
     preview_duration = int(os.environ.get('preview_duration')) if 'preview_duration' in os.environ and os.environ.get('preview_duration').isdigit() else default_preview_duration
+    preview_fps = int(os.environ.get('preview_fps')) if 'preview_fps' in os.environ and os.environ.get('preview_fps').isdigit() else default_preview_fps
+    preview_fps = preview_fps if preview_fps >= 5 and preview_fps <= 60 else default_preview_fps 
+    preview_resolution = os.getenv('preview_resolution', '720p').lower()
+    preview_resolution = default_preview_resolution.get(preview_resolution, "1280x720")
+    preview_bitrate = int(os.environ.get('preview_bitrate')) if 'preview_bitrate' in os.environ and os.environ.get('preview_bitrate').isdigit() else default_preview_bitrate
     preview_audio = os.getenv('preview_audio', 'false').lower() in ['true']
     if preview_duration < 1:
       print("Previews should be at least 1 second long")
@@ -375,7 +383,7 @@ def main(event, context=""):
       end_clip = time.time()
       print(end_clip- start_clip, "FINISHED CREATING A CLIP")
     elif provider == "AWS":
-      generate_clipv2(url, preview_file_name, preview_duration, preview_audio)
+      generate_clipv2(url, preview_file_name, preview_duration, preview_audio, preview_resolution, preview_fps, preview_bitrate)
 
     check_output(f"{preview_file_name}", "ffmpeg")
     check_output(f"/tmp/thumb.jpg", "ffmpeg")

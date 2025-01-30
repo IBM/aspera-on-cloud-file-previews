@@ -54,8 +54,11 @@ resource "aws_lambda_function" "terraform_lambda_video" {
 
   environment {
     variables = {
-      preview_duration = var.preview_duration
-      preview_audio    = var.preview_audio
+      preview_duration   = var.preview_duration
+      preview_audio      = var.preview_audio
+      preview_resolution = var.preview_resolution
+      preview_fps        = var.preview_fps
+      preview_bitrate    = var.preview_bitrate
     }
   }
 }
